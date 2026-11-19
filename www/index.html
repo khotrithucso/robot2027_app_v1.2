@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Robot 2027 V1.2 Pro</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- Cổng thoát Kiosk bí mật (Chạm 5 lần vào góc trên bên trái) -->
+  <div class="secret-admin-corner" onclick="handleSecretCornerTap()"></div>
+
+  <!-- Lớp nền mờ khi xổ thanh Hamburger -->
+  <div class="nav-backdrop" id="nav-backdrop" onclick="toggleHamburger(false)"></div>
+
+  <!-- =========================================================
+       THANH ICON GÓC TRÊN BÊN PHẢI: THU GỌN HAMBURGER & XỔ FULL ICON
+  ========================================================= -->
+  <nav class="top-right-hamburger-wrap" id="hamburger-wrap" aria-label="Menu tính năng">
+    <button class="hamburger-trigger" id="hamburger-trigger" onclick="toggleHamburger()">
+      <span>☰</span>
+      <span id="hamburger-current-icon">🤖</span>
+      <span class="reward-timer-pill" id="reward-timer-pill">⏳ 10:00</span>
+    </button>
+
+    <div class="hamburger-drawer" id="hamburger-drawer">
+      <button class="drawer-icon-btn active" data-mode="robot" onclick="switchMode('robot')">
+        🤖 Học Tiếng Anh
+      </button>
+      <button class="drawer-icon-btn" data-mode="youtube" onclick="switchMode('youtube')">
+        ▶️ YouTube
+      </button>
+      <button class="drawer-icon-btn" data-mode="game" onclick="switchMode('game')">
+        🎮 Trò chơi
+      </button>
+      <button class="drawer-icon-btn auto-on" id="btn-auto-loop" onclick="toggleAutoLoop()">
+        🔄 Rảnh tay: BẬT
+      </button>
+      <button class="drawer-icon-btn" onclick="openSettingsModal()">
+        ⚙️ Cài đặt
+      </button>
+    </div>
+  </nav>
+
+  <!-- =========================================================
+       MÀN HÌNH 1: ROBOT HỌC TIẾNG ANH
+  ========================================================= -->
+  <main id="view-robot" class="screen-view active" onclick="handleStageTap()">
+    <!-- Khuôn mặt OLED -->
+    <div class="robot-face-stage">
+      <div class="oled-drift-layer" id="oled-drift-layer">
+        <div class="eyes-wrapper">
+          <div class="robot-eye" id="eye-left"></div>
+          <div class="robot-eye" id="eye-right"></div>
+        </div>
+        <div class="robot-mouth" id="robot-mouth"></div>
+      </div>
+
+      <div class="mic-wave-bar" id="mic-wave-bar">
+        <div class="mic-wave-fill" id="mic-wave-fill"></div>
+      </div>
+
+      <div class="status-badge" id="robot-status">Sẵn sàng đồng hành cùng bạn!</div>
+      <div class="live-caption-pill" id="live-caption"></div>
+    </div>
+
+    <!-- Thanh nút khởi động nhanh khi khuôn mặt đang ở giữa -->
+    <div class="idle-bottom-bar" onclick="event.stopPropagation()">
+      <button class="quick-pill-btn" onclick="openLessonPanel(true)">
+        📚 Bắt đầu học tiếng Anh
+      </button>
+      <button class="quick-pill-btn mic-idle" onclick="startUserMic(false)">
+        🎙️ Ra lệnh giọng nói
+      </button>
+    </div>
+
+    <!-- Bảng học tiếng Anh bên phải -->
+    <section class="lesson-panel" onclick="event.stopPropagation()">
+      <div class="lesson-top-row">
+        <div class="topic-selector-wrap">
+          <select class="clean-select" id="topic-select" onchange="onTopicOrLevelChange()"></select>
+          <select class="clean-select" id="level-select" onchange="onTopicOrLevelChange()">
+            <option value="0">Tất cả cấp độ</option>
+            <option value="1">⭐ Cơ bản</option>
+            <option value="2">⭐⭐ Giao tiếp</option>
+            <option value="3">⭐⭐⭐ Nâng cao</option>
+          </select>
+        </div>
+
+        <div class="stats-pills">
+          <span class="stat-chip" id="sentence-counter">Câu 1/6</span>
+          <span class="stat-chip" id="active-user-badge">👤 Bé Bi</span>
+          <span class="stat-chip" style="color:#fbbf24">⭐ <strong id="user-stars">0</strong></span>
+        </div>
+      </div>
+
+      <div class="sentence-stage">
+        <div class="en-sentence" id="en-sentence"></div>
+        <div class="word-tip-hint">💡 Chạm vào từng từ tiếng Anh bất kỳ để nghe Robo đọc chậm riêng từ đó</div>
+
+        <div class="heard-box" id="heard-box">
+          <span id="heard-text" style="color:#e2e8f0"></span>
+          <button class="mini-replay-btn" onclick="replayLastHeard()">🔊 Nghe lại câu vừa nói</button>
+        </div>
+
+        <div class="vi-box" id="vi-box">
+          <div class="vi-meaning" id="vi-meaning"></div>
+          <div class="vi-explain" id="vi-explain"></div>
+        </div>
+      </div>
+
+      <div class="lesson-controls">
+        <button class="action-btn btn-listen" onclick="speakCurrentSample()">🔊 Nghe mẫu</button>
+        <button class="action-btn btn-speak" id="btn-speak" onclick="startUserMic(false)">🎙️ Đọc lại</button>
+        <button class="action-btn btn-vi" onclick="toggleTranslation()">🇻🇳 Dịch & Giải thích</button>
+        <button class="action-btn btn-next" onclick="nextSentence()">⏭️ Câu tiếp</button>
+        <button class="action-btn" onclick="openLessonPanel(false)">👁️ Thu gọn</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- =========================================================
+       MÀN HÌNH 2: YOUTUBE NHÚNG TỪ MÁY CHỦ
+  ========================================================= -->
+  <section id="view-youtube" class="screen-view">
+    <div class="iframe-container">
+      <div class="iframe-overlay-msg" id="loading-youtube">
+        <div class="spinner-ring"></div>
+        <div style="color:#38bdf8;font-weight:600">Đang kết nối kênh YouTube an toàn...</div>
+      </div>
+      <div class="iframe-overlay-msg" id="offline-youtube">
+        <div style="font-size:42px">📡</div>
+        <div style="font-size:16px;font-weight:700">Chưa có kết nối Wi-Fi</div>
+        <button class="action-btn btn-listen" onclick="reloadIframe('youtube')">🔄 Thử kết nối lại</button>
+      </div>
+      <iframe
+        id="iframe-youtube"
+        class="remote-iframe"
+        allow="autoplay; fullscreen; encrypted-media"
+        allowfullscreen>
+      </iframe>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       MÀN HÌNH 3: GAME NHÚNG TỪ MÁY CHỦ
+  ========================================================= -->
+  <section id="view-game" class="screen-view">
+    <div class="iframe-container">
+      <div class="iframe-overlay-msg" id="loading-game">
+        <div class="spinner-ring"></div>
+        <div style="color:#38bdf8;font-weight:600">Đang tải khu vui chơi...</div>
+      </div>
+      <div class="iframe-overlay-msg" id="offline-game">
+        <div style="font-size:42px">📡</div>
+        <div style="font-size:16px;font-weight:700">Chưa có kết nối Wi-Fi</div>
+        <button class="action-btn btn-listen" onclick="reloadIframe('game')">🔄 Thử kết nối lại</button>
+      </div>
+      <iframe
+        id="iframe-game"
+        class="remote-iframe"
+        allow="autoplay; fullscreen; microphone"
+        allowfullscreen>
+      </iframe>
+    </div>
+  </section>
+
+  <!-- Nút nhắc giọng nói thu nhỏ khi đang ở YouTube/Game -->
+  <button class="floating-voice-back" id="floating-voice-back" onclick="switchMode('robot')">
+    🤖 Nói "Học tiếng Anh" hoặc chạm để về Robot
+  </button>
+
+  <!-- =========================================================
+       MÀN HÌNH NGỦ BẢO VỆ OLED & PIN
+  ========================================================= -->
+  <div class="sleep-overlay" id="sleep-overlay" onclick="wakeRobot(true)">
+    <div style="font-size: 46px; opacity: 0.35;">💤</div>
+    <div style="font-size: 14px;">Robo đang nghỉ tiết kiệm pin • Chạm màn hình hoặc vỗ tay để đánh thức</div>
+  </div>
+
+  <!-- =========================================================
+       MODAL CÀI ĐẶT HỒ SƠ & CHẾ ĐỘ THƯỞNG SAO
+  ========================================================= -->
+  <div class="modal-backdrop" id="settings-modal">
+    <div class="modal-box">
+      <h3>⚙️ Cài đặt Robot 2027 V1.2 Pro</h3>
+
+      <div class="setting-row">
+        <span>👤 Tên người học hiện tại:</span>
+        <input type="text" class="modal-input" id="setting-user-name" placeholder="Ví dụ: Bé Bi" />
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <div style="font-weight:600">🏆 Tích 5 ⭐ mở khóa 10 phút YouTube/Game</div>
+          <div style="font-size:12px;color:#94a3b8">Khuyến khích bé hoàn thành bài học trước khi giải trí</div>
+        </div>
+        <input type="checkbox" id="setting-reward-lock" style="width:22px;height:22px" />
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px">
+        <button class="action-btn" onclick="closeSettingsModal()">Đóng</button>
+        <button class="action-btn btn-speak" onclick="saveSettingsModal()">💾 Lưu thay đổi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       MODAL QUẢN TRỊ KIOSK (MÃ PIN MẶC ĐỊNH: 2027)
+  ========================================================= -->
+  <div class="modal-backdrop" id="pin-modal">
+    <div class="modal-box" style="max-width:360px;text-align:center">
+      <h3>🔐 Quản trị Khóa Màn Hình Kiosk</h3>
+      <p style="font-size:13px;color:#94a3b8;margin-bottom:12px">Nhập mã PIN (mặc định: 2027) để mở khóa thoát ứng dụng</p>
+      <input type="password" inputmode="numeric" maxlength="6" class="modal-input" id="pin-input" style="width:100%;text-align:center;font-size:20px;letter-spacing:6px" placeholder="••••" />
+      <div style="display:flex;justify-content:center;gap:8px;margin-top:14px;flex-wrap:wrap">
+        <button class="action-btn" onclick="document.getElementById('pin-modal').classList.remove('open')">Hủy</button>
+        <button class="action-btn btn-listen" onclick="relockKiosk()">🔒 Khóa lại</button>
+        <button class="action-btn btn-skip" onclick="verifyAdminPin()">🔓 Mở khóa</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/lessons_data.js"></script>
+  <script src="js/voice_router.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

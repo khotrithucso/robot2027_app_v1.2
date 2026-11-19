@@ -1,0 +1,65 @@
+name: Build Robot 2027 V1.2 Pro APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build-android:
+    name: Build APK Robot 2027 V1.2 Pro
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Checkout code từ GitHub
+        uses: actions/checkout@v4
+
+      - name: 2. Cài đặt Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 3. Cài đặt Java 21 (Cho Gradle Android)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: 4. Cài thư viện Capacitor & Tạo dự án Android
+        run: |
+          npm install
+          npx cap add android
+
+      - name: 5. Chép các Plugin phần cứng Android, Kiosk & Auto-Boot vào dự án
+        run: |
+          PKG_DIR="android/app/src/main/java/vn/io/khotrithucso/robot2027"
+          mkdir -p "$PKG_DIR"
+          cp native_android/MainActivity.java "$PKG_DIR/MainActivity.java"
+          cp native_android/SpeechBridgePlugin.java "$PKG_DIR/SpeechBridgePlugin.java"
+          cp native_android/BootReceiver.java "$PKG_DIR/BootReceiver.java"
+
+      - name: 6. Cấu hình màn hình ngang, quyền phần cứng & Kiosk trong AndroidManifest
+        run: |
+          cp native_android/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
+
+      - name: 7. Đồng bộ Web vào Android & Build file APK V1.2 Pro
+        run: |
+          npx cap sync android
+          # Thêm kho dự phòng Google Maven Mirror để tránh lỗi gián đoạn repo.maven.apache.org
+          sed -i 's|mavenCentral()|mavenCentral()\n        maven { url "https://maven-central.storage-download.googleapis.com/maven2" }|g' android/build.gradle
+          if [ -f android/settings.gradle ]; then
+            sed -i 's|mavenCentral()|mavenCentral()\n        maven { url "https://maven-central.storage-download.googleapis.com/maven2" }|g' android/settings.gradle
+          fi
+          echo "org.gradle.jvmargs=-Xmx2048m -Djava.net.preferIPv4Stack=true" >> android/gradle.properties
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: 8. Xuất file APK V1.2 Pro để tải về cài đặt
+        uses: actions/upload-artifact@v4
+        with:
+          name: Robot2027-V1.2-Pro-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk

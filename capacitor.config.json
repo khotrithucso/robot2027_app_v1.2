@@ -1,0 +1,24 @@
+{
+  "appId": "vn.io.khotrithucso.robot2027",
+  "appName": "Robot 2027 Pro",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "allowNavigation": [
+      "trithuc.io.vn",
+      "*.trithuc.io.vn",
+      "khotrithucso.io.vn",
+      "*.khotrithucso.io.vn",
+      "*.youtube.com",
+      "*.youtube-nocookie.com",
+      "*.ytimg.com",
+      "*.googlevideo.com"
+    ]
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  }
+}
